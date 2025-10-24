@@ -38,7 +38,7 @@
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
             // Registra o Service Worker a partir do arquivo sw.js
-            navigator.serviceWorker.register('/SNv/firebase-messaging-sw.js').then(function(registration) {
+            navigator.serviceWorker.register('/SNv/service-worker.js').then(function(registration) {
                 // Registro bem-sucedido
                 console.log('Service Worker registrado com sucesso:', registration.scope);
             }, function(err) {
