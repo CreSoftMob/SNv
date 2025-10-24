@@ -5,7 +5,7 @@
     <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <title>SameNext</title>
-      <link rel="manifest" href="/manifest.json" />
+      <link rel="manifest" href="/SNv/manifest.json" />
     <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
     <style id="expo-reset">
       /* These styles make the body full-height */
@@ -24,7 +24,7 @@
         flex: 1;
       }
     </style>
-  <link rel="shortcut icon"  href="/favicon.ico" /></head>
+  <link rel="shortcut icon"  href="SNv/favicon.ico" /></head>
 
   <body>
     <!-- Use static rendering with Expo Router to support running without JavaScript. -->
@@ -38,7 +38,7 @@
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
             // Registra o Service Worker a partir do arquivo sw.js
-            navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
+            navigator.serviceWorker.register('SNv/service-worker.js').then(function(registration) {
                 // Registro bem-sucedido
                 console.log('Service Worker registrado com sucesso:', registration.scope);
             }, function(err) {
@@ -48,6 +48,6 @@
         });
     }
 </script>*/}
-  <script src="/index-0cd4ff0731d82377e8325ec7e2e237c4.js" defer></script>
+  <script src="SNv/index-0cd4ff0731d82377e8325ec7e2e237c4.js" defer></script>
 </body>
 </html>
