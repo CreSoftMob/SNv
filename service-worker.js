@@ -1,7 +1,7 @@
 // service-worker.js
 
 // ❗ Altere a versão sempre que atualizar o código
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `samenext-cache-${CACHE_VERSION}`;
 
 const urlsToCache = [
