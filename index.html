@@ -34,6 +34,18 @@
     <noscript>
       You need to enable JavaScript to run this app.
     </noscript>
+    <main>
+    <h1>Meu PWA Incrível</h1>
+    <button id="installButton" style="display: none; padding: 10px; font-size: 16px;">
+        </button>
+    
+    <p id="installInstructionText" style="display: none; padding: 15px; border: 1px dashed blue; background-color: #e6f0ff;">
+        </p>
+
+    <p>... Conteúdo do seu aplicativo ...</p>
+</main>
+
+<script src="seu_script.js"></script>
     <!-- The root element for your Expo app. -->
     <div id="root"></div>
      <script>
@@ -51,6 +63,108 @@
         });
     }
 </script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+    const installButton = document.getElementById('installButton');
+    const installInstructionText = document.getElementById('installInstructionText');
+    let deferredPrompt;
+
+    // --- 1. FUNÇÃO DE DETECÇÃO DE SISTEMA OPERACIONAL ---
+    function isIOS() {
+        const userAgent = navigator.userAgent;
+        // Verifica se é um dispositivo Apple e se não é um aplicativo web (standalone)
+        return (
+            /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream &&
+            !window.navigator.standalone
+        );
+    }
+    
+    function isAndroid() {
+        const userAgent = navigator.userAgent;
+        // Verifica se é um dispositivo Android
+        return /Android/.test(userAgent);
+    }
+    
+    // Verifica se o aplicativo já está em modo standalone (já instalado)
+    function isStandalone() {
+        return (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone);
+    }
+
+    // Se já estiver instalado (standalone), não faz nada
+    if (isStandalone()) {
+        console.log('PWA já instalado.');
+        return;
+    }
+
+    // --- 2. LÓGICA ESPECÍFICA PARA IOS (iPHONE/IPAD) ---
+    if (isIOS()) {
+        console.log('Dispositivo iOS detectado.');
+        
+        // Esconde o botão e exibe as instruções
+        installButton.style.display = 'none';
+        
+        // Exibe o texto de instrução
+        if (installInstructionText) {
+            installInstructionText.innerHTML = `
+                Para adicionar à tela inicial, toque no **Ícone de Compartilhamento** ($\text{\uparrow}$) 
+                na barra de navegação do Safari e selecione **"Adicionar à Tela de Início"**. 
+                
+            `;
+            installInstructionText.style.display = 'block';
+        }
+        return;
+    }
+
+    // --- 3. LÓGICA ESPECÍFICA PARA ANDROID (COMPATÍVEL COM PWA) ---
+    // Este evento só é disparado em navegadores que suportam a instalação (ex: Chrome no Android)
+    window.addEventListener('beforeinstallprompt', (event) => {
+        console.log('Evento beforeinstallprompt detectado (Android/Desktop compatível).');
+        
+        // Previne que o prompt padrão apareça imediatamente
+        event.preventDefault();
+        
+        // Armazena o evento para ser acionado pelo clique do nosso botão
+        deferredPrompt = event;
+
+        // Torna o botão visível
+        if (installButton) {
+            installButton.style.display = 'block';
+            installButton.textContent = 'Instalar Aplicativo';
+        }
+
+        // Adiciona o Listener de clique
+        installButton.addEventListener('click', () => {
+            if (deferredPrompt) {
+                // Esconde o botão para evitar cliques duplicados
+                installButton.style.display = 'none';
+                
+                // Dispara o prompt de instalação nativo
+                deferredPrompt.prompt();
+                
+                // Captura a escolha do usuário
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Usuário aceitou a instalação do PWA.');
+                    } else {
+                        console.log('Usuário recusou a instalação do PWA.');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        });
+    });
+
+    // Oculta o botão se a instalação ocorrer depois que a página foi carregada
+    window.addEventListener('appinstalled', () => {
+        if (installButton) {
+            installButton.style.display = 'none';
+        }
+        if (installInstructionText) {
+            installInstructionText.style.display = 'none';
+        }
+    });
+});
+    </script>
   <script src="/index-899d8bb1ae58be1faf097299e5ddf3c4.js" defer></script>
 </body>
 </html>
