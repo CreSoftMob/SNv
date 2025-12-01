@@ -15,7 +15,7 @@ const firebaseConfig = {
 // 💡 Defina um NOME DE CACHE ÚNICO (VERSIONAMENTO)
 // Altere esta variável sempre que fizer um novo deploy grande que mude os assets.
 // Para um projeto Expo/React, o melhor é não usar cache estático aqui, mas a limpeza é útil.
-const CACHE_NAME = 'Versão do SNv: 8.5'; // Versão atual
+const CACHE_NAME = 'Versão do SNv: 8.6'; // Versão atual
 
 // Inicializa o Firebase no Service Worker
 firebase.initializeApp(firebaseConfig);
