@@ -12,8 +12,7 @@ const firebaseConfig = {
 
 const VERSION = 'v1.9'; 
 // 💡 DICA: Para o badge, tente usar uma versão PNG BRANCA com fundo transparente depois.
-const LOGO_APP = 'https://cdn-icons-png.flaticon.com/128/18827/18827926.png';
-const LOGO_APP1 = "https://img.cdndsgni.com/preview/13138957.jpg"
+const LOGO_APP = 'https://cresoftmob.github.io/img/logo.jpeg';
 
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
@@ -35,7 +34,7 @@ messaging.onBackgroundMessage((payload) => {
     const options = {
         body: body,
         icon: icon && icon !== "" ? icon : LOGO_APP, // Foto do remetente
-        badge: LOGO_APP1,                             // Ícone da barra de status
+        badge: LOGO_APP,                             // Ícone da barra de status
         tag: chatId || 'chat-tag',                   // Agrupa mensagens do mesmo chat
         renotify: true,                              // Avisa novamente se chegar mensagem nova na mesma tag
         vibrate: [200, 100, 200],
