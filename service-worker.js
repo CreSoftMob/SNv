@@ -12,7 +12,7 @@ const firebaseConfig = {
 };
 
 // 2. VERSÃO E LINKS (🚨 Troque o link abaixo pelo logo do seu app)
-const VERSION = 'v1.2.0'; 
+const VERSION = 'v1.2.9'; 
 const LOGO_APP = 'https://cresoftmob.github.io/img/logo.jpeg'; 
 const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/128/18827/18827926.png';
 
