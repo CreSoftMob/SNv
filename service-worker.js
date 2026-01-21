@@ -10,7 +10,7 @@ const firebaseConfig = {
   appId: "1:129112776900:web:360f27176f339a3dec2991",
 };
 
-const VERSION = 'v1.2.9'; 
+const VERSION = 'v1.6'; 
 // 💡 DICA: Para o badge, tente usar uma versão PNG BRANCA com fundo transparente depois.
 const LOGO_APP = 'https://cdn-icons-png.flaticon.com/128/18827/18827926.png'; 
 
