@@ -14,7 +14,7 @@ const firebaseConfig = {
 // 2. VERSÃO E LINKS (🚨 Troque o link abaixo pelo logo do seu app)
 const VERSION = 'v1.2.0'; 
 const LOGO_APP = 'https://cresoftmob.github.io/img/logo.jpeg'; 
-const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?background=random&name=User';
+const DEFAULT_AVATAR = 'https://th.bing.com/th/id/OIP.cKsh6PGMYsARDd2DVgNWogAAAA?w=169&h=180&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3';
 
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
