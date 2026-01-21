@@ -1,58 +1,67 @@
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
 
-// 1. CONFIGURAÇÃO (🚨 Substitua com seus dados reais)
+// 1. CONFIGURAÇÃO (🚨 Substitua pelas suas chaves reais)
 const firebaseConfig = {
-   apiKey: "AIzaSyAWPLRTgbBWhwPGf6yK_R85sh6NYSmqPvY",
-  authDomain: "app-create-a3dfd.firebaseapp.com",
-  projectId: "app-create-a3dfd",
-  storageBucket: "app-create-a3dfd.firebasestorage.app",
-  messagingSenderId: "129112776900",
-  appId: "1:129112776900:web:360f27176f339a3dec2991",
+ apiKey: "AIzaSyAWPLRTgbBWhwPGf6yK_R85sh6NYSmqPvY",
+    authDomain: "app-create-a3dfd.firebaseapp.com",
+    projectId: "app-create-a3dfd",
+    storageBucket: "app-create-a3dfd.firebasestorage.app",
+    messagingSenderId: "129112776900",
+    appId: "1:129112776900:web:360f27176f339a3dec2991",
 };
 
-// 2. VERSÃO E LINKS (🚨 Troque o link abaixo pelo logo do seu app)
-const VERSION = 'v1.2.0'; 
-const LOGO_APP = 'https://sua-url-do-firebase-storage.com/logo_app.png'; 
-const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?background=random&name=User';
+// 2. VERSIONAMENTO E LIMPEZA DE CACHE
+const CACHE_NAME = 'fcm-sw-cache-v1.1.2';
+const DEFAULT_AVATAR = 'https://ui-avatars.com/api/?name=User&background=random';
 
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// 3. INSTALAÇÃO E LIMPEZA DE CACHE
-self.addEventListener('install', (e) => e.waitUntil(self.skipWaiting()));
-self.addEventListener('activate', (e) => {
-    e.waitUntil(
-        caches.keys().then((keys) => Promise.all(
-            keys.map((k) => (k !== VERSION) && caches.delete(k))
-        )).then(() => self.clients.claim())
+self.addEventListener('install', (event) => {
+    event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    if (cacheName.startsWith('fcm-sw-cache-') && cacheName !== CACHE_NAME) {
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        }).then(() => self.clients.claim())
     );
 });
 
-// 4. EXIBIÇÃO DA NOTIFICAÇÃO
+// 3. RECEBIMENTO E EXIBIÇÃO (EVITA DUPLICIDADE)
 messaging.onBackgroundMessage((payload) => {
     const { title, body, icon, chatId } = payload.data;
 
-    const options = {
+    const notificationOptions = {
         body: body,
-        icon: icon && icon !== "" ? icon : LOGO_APP, // Foto de quem enviou (ou logo do app)
-        badge: LOGO_APP, // 🏆 ISSO TIRA O SINO E COLOCA SEU LOGO
-        tag: chatId || 'chat-tag', // 🏆 ISSO EVITA DUPLICIDADE
+        icon: icon && icon !== "" ? icon : DEFAULT_AVATAR,
+        // 💡 A TAG evita que a mensagem apareça 2 vezes. 
+        // Se houver uma notificação aberta do mesmo chat, ela apenas atualiza o texto.
+        tag: chatId || 'new-msg', 
         renotify: true,
         vibrate: [200, 100, 200],
         data: { url: '/' }
     };
 
-    return self.registration.showNotification(title, options);
+    return self.registration.showNotification(title, notificationOptions);
 });
 
-// 5. CLIQUE NA NOTIFICAÇÃO
+// 4. CLIQUE NA NOTIFICAÇÃO
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-            for (let c of clients) {
-                if (c.url === '/' && 'focus' in c) return c.focus();
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+            for (let i = 0; i < windowClients.length; i++) {
+                let client = windowClients[i];
+                if (client.url === '/' && 'focus' in client) return client.focus();
             }
             if (clients.openWindow) return clients.openWindow('/');
         })
