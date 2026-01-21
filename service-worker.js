@@ -1,9 +1,8 @@
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
 
-// 1. CONFIGURAÇÃO (🚨 Substitua com seus dados reais)
 const firebaseConfig = {
-   apiKey: "AIzaSyAWPLRTgbBWhwPGf6yK_R85sh6NYSmqPvY",
+  apiKey: "AIzaSyAWPLRTgbBWhwPGf6yK_R85sh6NYSmqPvY",
   authDomain: "app-create-a3dfd.firebaseapp.com",
   projectId: "app-create-a3dfd",
   storageBucket: "app-create-a3dfd.firebasestorage.app",
@@ -11,16 +10,15 @@ const firebaseConfig = {
   appId: "1:129112776900:web:360f27176f339a3dec2991",
 };
 
-// 2. VERSÃO E LINKS (🚨 Troque o link abaixo pelo logo do seu app)
 const VERSION = 'v1.2.9'; 
+// 💡 DICA: Para o badge, tente usar uma versão PNG BRANCA com fundo transparente depois.
 const LOGO_APP = 'https://cdn-icons-png.flaticon.com/128/18827/18827926.png'; 
-const DEFAULT_AVATAR = 'https://cdn-icons-png.flaticon.com/128/18827/18827926.png';
 
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// 3. INSTALAÇÃO E LIMPEZA DE CACHE
 self.addEventListener('install', (e) => e.waitUntil(self.skipWaiting()));
+
 self.addEventListener('activate', (e) => {
     e.waitUntil(
         caches.keys().then((keys) => Promise.all(
@@ -29,16 +27,16 @@ self.addEventListener('activate', (e) => {
     );
 });
 
-// 4. EXIBIÇÃO DA NOTIFICAÇÃO
 messaging.onBackgroundMessage((payload) => {
+    // 💡 A Cloud Function envia os dados no objeto 'data'
     const { title, body, icon, chatId } = payload.data;
 
     const options = {
         body: body,
-        icon: icon && icon !== "" ? icon : LOGO_APP, // Foto de quem enviou (ou logo do app)
-        badge: LOGO_APP, // 🏆 ISSO TIRA O SINO E COLOCA SEU LOGO
-        tag: chatId || 'chat-tag', // 🏆 ISSO EVITA DUPLICIDADE
-        renotify: true,
+        icon: icon && icon !== "" ? icon : LOGO_APP, // Foto do remetente
+        badge: LOGO_APP,                             // Ícone da barra de status
+        tag: chatId || 'chat-tag',                   // Agrupa mensagens do mesmo chat
+        renotify: true,                              // Avisa novamente se chegar mensagem nova na mesma tag
         vibrate: [200, 100, 200],
         data: { url: '/' }
     };
@@ -46,12 +44,11 @@ messaging.onBackgroundMessage((payload) => {
     return self.registration.showNotification(title, options);
 });
 
-// 5. CLIQUE NA NOTIFICAÇÃO
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-            for (let c of clients) {
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+            for (let c of windowClients) {
                 if (c.url === '/' && 'focus' in c) return c.focus();
             }
             if (clients.openWindow) return clients.openWindow('/');
