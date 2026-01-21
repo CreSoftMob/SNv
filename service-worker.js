@@ -10,9 +10,10 @@ const firebaseConfig = {
   appId: "1:129112776900:web:360f27176f339a3dec2991",
 };
 
-const VERSION = 'v1.9'; 
+const VERSION = 'v2.0'; 
 // 💡 DICA: Para o badge, tente usar uma versão PNG BRANCA com fundo transparente depois.
-const LOGO_APP = 'https://cresoftmob.github.io/img/logo.jpeg';
+const LOGO_APP = 'https://cdn-icons-png.flaticon.com/128/3669/3669377.png';
+const LOGO_APP1 = 'https://cdn-icons-png.flaticon.com/128/18827/18827925.png'
 
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
@@ -33,7 +34,7 @@ messaging.onBackgroundMessage((payload) => {
 
     const options = {
         body: body,
-        icon: icon && icon !== "" ? icon : LOGO_APP, // Foto do remetente
+        icon: icon && icon !== "" ? icon : LOGO_APP1, // Foto do remetente
         badge: LOGO_APP,                             // Ícone da barra de status
         tag: chatId || 'chat-tag',                   // Agrupa mensagens do mesmo chat
         renotify: true,                              // Avisa novamente se chegar mensagem nova na mesma tag
