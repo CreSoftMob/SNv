@@ -12,7 +12,7 @@ const firebaseConfig = {
 
 const VERSION = 'v2.3'; 
 // 💡 DICA: Para o badge, tente usar uma versão PNG BRANCA com fundo transparente depois.
-const LOGO_APP = 'https://cdn-icons-png.flaticon.com/128/4926/4926586.png';
+const LOGO_APP = 'https://th.bing.com/th/id/OIP.oubkbWDdN9i3mz_pC-g4_gHaHa?w=201&h=201&c=7&r=0&o=7&cb=defcache2&dpr=1.3&pid=1.7&rm=3&defcache=1'; //https://cdn-icons-png.flaticon.com/128/4926/4926586.png
 const LOGO_APP1 = 'https://cdn-icons-png.flaticon.com/128/18827/18827925.png'
 
 firebase.initializeApp(firebaseConfig);
