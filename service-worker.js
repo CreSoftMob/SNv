@@ -15,7 +15,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-const VERSION = 'v3.1';
+const VERSION = 'v3.9';
 const LOGO_PADRAO = 'https://cdn-icons-png.flaticon.com/128/18827/18827925.png';
 const BADGE_ICON = 'https://cdn-icons-png.flaticon.com/128/4926/4926586.png';
 
