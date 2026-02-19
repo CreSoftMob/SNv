@@ -1,7 +1,8 @@
+// firebase-messaging-sw.js
+
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
 
-// 1. Configuração do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAWPLRTgbBWhwPGf6yK_R85sh6NYSmqPvY",
   authDomain: "app-create-a3dfd.firebaseapp.com",
@@ -14,13 +15,12 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// 2. Constantes de UI
 const VERSION = 'v3.1';
-const LOGO_PADRAO = 'https://cdn-icons-png.flaticon.com/128/18827/18827925.png'; // Ícone do App
-const BADGE_ICON = 'https://cdn-icons-png.flaticon.com/128/4926/4926586.png';  // Ícone monocromático (Android)
+const LOGO_PADRAO = 'https://cdn-icons-png.flaticon.com/128/18827/18827925.png';
+const BADGE_ICON = 'https://cdn-icons-png.flaticon.com/128/4926/4926586.png';
 
-// 3. Ciclo de Vida do SW
 self.addEventListener('install', (e) => self.skipWaiting());
+
 self.addEventListener('activate', (e) => {
     e.waitUntil(
         caches.keys().then((keys) => Promise.all(
@@ -29,67 +29,60 @@ self.addEventListener('activate', (e) => {
     );
 });
 
-// 4. Tratamento de Mensagem em Segundo Plano (Background)
 messaging.onBackgroundMessage((payload) => {
-    console.log('[SW] Mensagem recebida em background:', payload);
+    console.log('[SW] Mensagem recebida:', payload);
 
-    // Se o payload já vier com o objeto "notification" preenchido pela Cloud Function,
-    // o navegador PODE exibir automaticamente. Para evitar duplicidade e garantir 
-    // personalização (como agrupar por tag), verificamos:
-    
-    const title = payload.notification?.title || payload.data?.title || "Nova Mensagem";
-    const body = payload.notification?.body || payload.data?.body || "";
-    
-    // Pegamos os dados extras enviados na Cloud Function
+    // Ajuste 1: Priorizamos os dados (payload.data) pois são mais flexíveis no background
+    const title = payload.data?.title || payload.notification?.title || "Nova Mensagem";
+    const body = payload.data?.body || payload.notification?.body || "";
     const chatId = payload.data?.chatId || 'geral';
     const senderIcon = payload.data?.icon || LOGO_PADRAO;
-    const clickUrl = payload.data?.url || `/chat/${chatId}`;
+    
+    // Garante que a URL seja absoluta ou tratada corretamente no clique
+    const clickUrl = payload.data?.url || '/'; 
 
     const notificationOptions = {
         body: body,
         icon: senderIcon,
         badge: BADGE_ICON,
-        tag: chatId,            // IMPORTANTE: Agrupa mensagens do mesmo chat (não empilha 50 balões)
-        renotify: true,         // Faz o celular vibrar mesmo se já houver notificação daquela tag
+        tag: chatId,
+        renotify: true,
         vibrate: [200, 100, 200],
         data: {
-            url: clickUrl       // Guardamos a URL para o evento de clique abaixo
+            url: clickUrl
         },
         actions: [
             { action: 'open', title: 'Visualizar' }
         ]
     };
 
-    // Apenas chamamos showNotification se o navegador já não tiver exibido
-    // (Prevenção de duplicidade em alguns navegadores Android)
+    // Ajuste 2: Se 'notification' já existe no payload, o Firebase no Android 
+    // costuma exibir sozinho. Se não, forçamos a exibição manual.
     if (!payload.notification) {
         return self.registration.showNotification(title, notificationOptions);
     }
 });
 
-// 5. Lógica de Clique na Notificação
 self.addEventListener('notificationclick', (event) => {
-    event.notification.close(); // Fecha o banner ao clicar
+    event.notification.close();
 
-    // Recupera a URL de destino (ex: /chat/123)
-    const targetUrl = event.notification.data?.url || '/';
+    // Pegamos a URL base para comparar com as abas abertas
+    const targetUrl = new URL(event.notification.data?.url || '/', self.location.origin).href;
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-            // 1. Tenta encontrar uma aba que já esteja na URL do chat
+            // 1. Verifica se já existe uma aba com essa URL exata aberta
             for (let client of windowClients) {
-                const clientUrl = new URL(client.url).pathname;
-                if (clientUrl.includes(targetUrl) && 'focus' in client) {
+                if (client.url === targetUrl && 'focus' in client) {
                     return client.focus();
                 }
             }
-            // 2. Se não achou, mas tem o app aberto em outra tela, redireciona essa tela
-            for (let client of windowClients) {
-                if ('navigate' in client) {
-                    return client.navigate(targetUrl).then(c => c?.focus());
-                }
+            // 2. Se não houver a URL exata, mas houver uma aba do app aberta, navega nela
+            if (windowClients.length > 0) {
+                const client = windowClients[0];
+                return client.navigate(targetUrl).then(c => c?.focus());
             }
-            // 3. Se o app estiver fechado, abre uma nova janela
+            // 3. Se tudo estiver fechado, abre nova janela
             if (clients.openWindow) {
                 return clients.openWindow(targetUrl);
             }
