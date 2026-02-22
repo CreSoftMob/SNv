@@ -15,9 +15,10 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-const VERSION = 'v3.2'; // Incrementei a versão para forçar atualização no navegador
-const LOGO_APP = 'https://cdn-icons-png.flaticon.com/128/18827/18827925.png'; // Seu ícone do APP
-const BADGE_ICON = 'https://cdn-icons-png.flaticon.com/128/4926/4926586.png'; // O ícone da barra de status
+const VERSION = 'v4.0'; // Versão atualizada
+// Use URLs absolutas e seguras (HTTPS) para os ícones
+const LOGO_APP = 'https://cdn-icons-png.flaticon.com/128/18827/18827925.png'; 
+const BADGE_ICON = 'https://cdn-icons-png.flaticon.com/128/4926/4926586.png'; 
 
 self.addEventListener('install', (e) => self.skipWaiting());
 
@@ -29,56 +30,58 @@ self.addEventListener('activate', (e) => {
     );
 });
 
-// Lógica de recebimento em background
 messaging.onBackgroundMessage((payload) => {
     console.log('[SW] Mensagem recebida:', payload);
 
-    // Extraímos os dados
     const title = payload.data?.title || payload.notification?.title || "Nova Mensagem";
     const body = payload.data?.body || payload.notification?.body || "";
     
-    // IMPORTANTE: Aqui definimos que o ícone da notificação SERÁ o logo do seu APP
-    // Se você quiser a foto do usuário, use payload.data.icon. 
-    // Como você quer o ícone do APP, fixamos o LOGO_APP aqui.
-    const appIcon = LOGO_APP; 
+    // Forçamos a URL a ser sempre válida para evitar erro no clique
+    let clickUrl = payload.data?.url || '/';
+    if (!clickUrl.startsWith('http')) {
+        clickUrl = new URL(clickUrl, self.location.origin).href;
+    }
 
     const notificationOptions = {
         body: body,
-        icon: appIcon,      // O ícone principal (Logo do seu App)
-        badge: BADGE_ICON,  // O ícone que aparece na barra de notificações (Android)
+        icon: LOGO_APP,      // Logo principal do seu App
+        badge: BADGE_ICON,   // Ícone pequeno da barra de tarefas (Android)
         tag: payload.data?.chatId || 'geral',
         renotify: true,
         vibrate: [200, 100, 200],
         data: {
-            url: payload.data?.url || '/'
+            url: clickUrl    // Armazenamos a URL completa aqui
         },
         actions: [
-            { action: 'open', title: 'Visualizar' }
+            { action: 'open', title: 'Abrir App' }
         ]
     };
 
-    // Forçamos a exibição manual para sobrescrever o padrão do navegador
+    // O segredo para o ícone do App não falhar é usar o self.registration direto
     return self.registration.showNotification(title, notificationOptions);
 });
 
 self.addEventListener('notificationclick', (event) => {
-    event.notification.close();
-    const targetUrl = new URL(event.notification.data?.url || '/', self.location.origin).href;
+    const notification = event.notification;
+    notification.close(); // Fecha a notificação imediatamente
+
+    // Recupera a URL que salvamos no 'data' acima
+    const targetUrl = notification.data?.url || '/';
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+            // 1. Tenta achar uma aba já aberta com o mesmo domínio
             for (let client of windowClients) {
-                if (client.url === targetUrl && 'focus' in client) {
-                    return client.focus();
+                if ('focus' in client) {
+                    return client.navigate(targetUrl).then(c => c?.focus());
                 }
             }
-            if (windowClients.length > 0) {
-                const client = windowClients[0];
-                return client.navigate(targetUrl).then(c => c?.focus());
-            }
+            // 2. Se não houver aba aberta, abre uma nova
             if (clients.openWindow) {
                 return clients.openWindow(targetUrl);
             }
+        }).catch(err => {
+            console.error("Erro ao processar clique na notificação:", err);
         })
     );
 });
