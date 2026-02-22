@@ -15,9 +15,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-const VERSION = 'v3.9';
-const LOGO_PADRAO = 'https://cdn-icons-png.flaticon.com/128/18827/18827925.png';
-const BADGE_ICON = 'https://cdn-icons-png.flaticon.com/128/4926/4926586.png';
+const VERSION = 'v3.2'; // Incrementei a versão para forçar atualização no navegador
+const LOGO_APP = 'https://cdn-icons-png.flaticon.com/128/18827/18827925.png'; // Seu ícone do APP
+const BADGE_ICON = 'https://cdn-icons-png.flaticon.com/128/4926/4926586.png'; // O ícone da barra de status
 
 self.addEventListener('install', (e) => self.skipWaiting());
 
@@ -29,60 +29,53 @@ self.addEventListener('activate', (e) => {
     );
 });
 
+// Lógica de recebimento em background
 messaging.onBackgroundMessage((payload) => {
     console.log('[SW] Mensagem recebida:', payload);
 
-    // Ajuste 1: Priorizamos os dados (payload.data) pois são mais flexíveis no background
+    // Extraímos os dados
     const title = payload.data?.title || payload.notification?.title || "Nova Mensagem";
     const body = payload.data?.body || payload.notification?.body || "";
-    const chatId = payload.data?.chatId || 'geral';
-    const senderIcon = payload.data?.icon || LOGO_PADRAO;
     
-    // Garante que a URL seja absoluta ou tratada corretamente no clique
-    const clickUrl = payload.data?.url || '/'; 
+    // IMPORTANTE: Aqui definimos que o ícone da notificação SERÁ o logo do seu APP
+    // Se você quiser a foto do usuário, use payload.data.icon. 
+    // Como você quer o ícone do APP, fixamos o LOGO_APP aqui.
+    const appIcon = LOGO_APP; 
 
     const notificationOptions = {
         body: body,
-        icon: senderIcon,
-        badge: BADGE_ICON,
-        tag: chatId,
+        icon: appIcon,      // O ícone principal (Logo do seu App)
+        badge: BADGE_ICON,  // O ícone que aparece na barra de notificações (Android)
+        tag: payload.data?.chatId || 'geral',
         renotify: true,
         vibrate: [200, 100, 200],
         data: {
-            url: clickUrl
+            url: payload.data?.url || '/'
         },
         actions: [
             { action: 'open', title: 'Visualizar' }
         ]
     };
 
-    // Ajuste 2: Se 'notification' já existe no payload, o Firebase no Android 
-    // costuma exibir sozinho. Se não, forçamos a exibição manual.
-    if (!payload.notification) {
-        return self.registration.showNotification(title, notificationOptions);
-    }
+    // Forçamos a exibição manual para sobrescrever o padrão do navegador
+    return self.registration.showNotification(title, notificationOptions);
 });
 
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-
-    // Pegamos a URL base para comparar com as abas abertas
     const targetUrl = new URL(event.notification.data?.url || '/', self.location.origin).href;
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-            // 1. Verifica se já existe uma aba com essa URL exata aberta
             for (let client of windowClients) {
                 if (client.url === targetUrl && 'focus' in client) {
                     return client.focus();
                 }
             }
-            // 2. Se não houver a URL exata, mas houver uma aba do app aberta, navega nela
             if (windowClients.length > 0) {
                 const client = windowClients[0];
                 return client.navigate(targetUrl).then(c => c?.focus());
             }
-            // 3. Se tudo estiver fechado, abre nova janela
             if (clients.openWindow) {
                 return clients.openWindow(targetUrl);
             }
