@@ -39,7 +39,7 @@ messaging.onBackgroundMessage((payload) => {
     const senderIcon = payload.data?.icon || LOGO_PADRAO;
     
     // Garante que a URL seja absoluta ou tratada corretamente no clique
-    const clickUrl = payload.data?.url || '/'; 
+    const clickUrl = payload.data?.url || 'https://samenext.com.br'; 
 
     const notificationOptions = {
         body: body,
@@ -67,7 +67,7 @@ self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 
     // Pegamos a URL base para comparar com as abas abertas
-    const targetUrl = new URL(event.notification.data?.url || 'https://samenext.com.br/', self.location.origin).href;
+    const targetUrl = new URL(event.notification.data?.url || '/', self.location.origin).href;
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
