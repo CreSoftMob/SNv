@@ -15,12 +15,15 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-const VERSION = 'v4.0'; // Versão atualizada
-// Use URLs absolutas e seguras (HTTPS) para os ícones
+// INCREMENTE ESTA VERSÃO SEMPRE QUE MUDAR O CÓDIGO (ex: v4.1, v4.2)
+const VERSION = 'v5.0'; 
+const BASE_URL = 'https://samenext.com.br';
 const LOGO_APP = 'https://cdn-icons-png.flaticon.com/128/18827/18827925.png'; 
 const BADGE_ICON = 'https://cdn-icons-png.flaticon.com/128/4926/4926586.png'; 
 
-self.addEventListener('install', (e) => self.skipWaiting());
+self.addEventListener('install', (e) => {
+    self.skipWaiting();
+});
 
 self.addEventListener('activate', (e) => {
     e.waitUntil(
@@ -30,58 +33,53 @@ self.addEventListener('activate', (e) => {
     );
 });
 
+// Lógica de recebimento da mensagem
 messaging.onBackgroundMessage((payload) => {
     console.log('[SW] Mensagem recebida:', payload);
 
-    const title = payload.data?.title || payload.notification?.title || "Nova Mensagem";
-    const body = payload.data?.body || payload.notification?.body || "";
+    const title = payload.data?.title || payload.notification?.title || "Samenext";
+    const body = payload.data?.body || payload.notification?.body || "Você tem uma nova atualização.";
     
-    // Forçamos a URL a ser sempre válida para evitar erro no clique
-    let clickUrl = payload.data?.url || '/';
-    if (!clickUrl.startsWith('http')) {
-        clickUrl = new URL(clickUrl, self.location.origin).href;
+    // Tratamento da URL para garantir que nunca dê erro no clique
+    let finalUrl = payload.data?.url || '/';
+    if (!finalUrl.startsWith('http')) {
+        finalUrl = new URL(finalUrl, BASE_URL).href;
     }
 
     const notificationOptions = {
         body: body,
-        icon: LOGO_APP,      // Logo principal do seu App
-        badge: BADGE_ICON,   // Ícone pequeno da barra de tarefas (Android)
+        icon: LOGO_APP,      // Ícone grande (Logo do App)
+        badge: BADGE_ICON,   // Ícone da barra de status (Obrigatório para Android)
         tag: payload.data?.chatId || 'geral',
         renotify: true,
         vibrate: [200, 100, 200],
         data: {
-            url: clickUrl    // Armazenamos a URL completa aqui
-        },
-        actions: [
-            { action: 'open', title: 'Abrir App' }
-        ]
+            url: finalUrl
+        }
     };
 
-    // O segredo para o ícone do App não falhar é usar o self.registration direto
+    // Forçamos o navegador a usar nossas configurações (incluindo o ícone)
     return self.registration.showNotification(title, notificationOptions);
 });
 
+// Lógica de clique corrigida para samenext.com.br
 self.addEventListener('notificationclick', (event) => {
-    const notification = event.notification;
-    notification.close(); // Fecha a notificação imediatamente
+    event.notification.close();
 
-    // Recupera a URL que salvamos no 'data' acima
-    const targetUrl = notification.data?.url || '/';
+    const targetUrl = event.notification.data?.url || BASE_URL;
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-            // 1. Tenta achar uma aba já aberta com o mesmo domínio
+            // Se já houver uma aba aberta, foca nela e navega
             for (let client of windowClients) {
                 if ('focus' in client) {
                     return client.navigate(targetUrl).then(c => c?.focus());
                 }
             }
-            // 2. Se não houver aba aberta, abre uma nova
+            // Se não houver nada aberto, abre uma nova janela
             if (clients.openWindow) {
                 return clients.openWindow(targetUrl);
             }
-        }).catch(err => {
-            console.error("Erro ao processar clique na notificação:", err);
         })
     );
 });
