@@ -15,15 +15,12 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// INCREMENTE ESTA VERSÃO SEMPRE QUE MUDAR O CÓDIGO (ex: v4.1, v4.2)
-const VERSION = 'v5.0'; 
+const VERSION = 'v5.1'; 
 const BASE_URL = 'https://samenext.com.br';
-const LOGO_APP = 'https://cdn-icons-png.flaticon.com/128/18827/18827925.png'; 
+const LOGO_PADRAO_APP = 'https://cdn-icons-png.flaticon.com/128/18827/18827925.png'; 
 const BADGE_ICON = 'https://cdn-icons-png.flaticon.com/128/4926/4926586.png'; 
 
-self.addEventListener('install', (e) => {
-    self.skipWaiting();
-});
+self.addEventListener('install', (e) => self.skipWaiting());
 
 self.addEventListener('activate', (e) => {
     e.waitUntil(
@@ -33,14 +30,18 @@ self.addEventListener('activate', (e) => {
     );
 });
 
-// Lógica de recebimento da mensagem
 messaging.onBackgroundMessage((payload) => {
     console.log('[SW] Mensagem recebida:', payload);
 
     const title = payload.data?.title || payload.notification?.title || "Samenext";
-    const body = payload.data?.body || payload.notification?.body || "Você tem uma nova atualização.";
+    const body = payload.data?.body || payload.notification?.body || "";
     
-    // Tratamento da URL para garantir que nunca dê erro no clique
+    // LÓGICA DE ÍCONE DINÂMICO:
+    // 1. Tenta pegar a foto do usuário (vindo do data.image ou data.icon ou notification.icon)
+    // 2. Se não existir, usa o logo padrão do app.
+    const userPhoto = payload.data?.image || payload.data?.icon || payload.notification?.icon || LOGO_PADRAO_APP;
+
+    // Tratamento de URL
     let finalUrl = payload.data?.url || '/';
     if (!finalUrl.startsWith('http')) {
         finalUrl = new URL(finalUrl, BASE_URL).href;
@@ -48,35 +49,35 @@ messaging.onBackgroundMessage((payload) => {
 
     const notificationOptions = {
         body: body,
-        icon: LOGO_APP,      // Ícone grande (Logo do App)
-        badge: BADGE_ICON,   // Ícone da barra de status (Obrigatório para Android)
+        icon: userPhoto,      // Foto do perfil (ou logo se não houver foto)
+        badge: BADGE_ICON,    // SEMPRE o ícone do app (barra de status)
         tag: payload.data?.chatId || 'geral',
         renotify: true,
         vibrate: [200, 100, 200],
         data: {
             url: finalUrl
-        }
+        },
+        actions: [
+            { action: 'open', title: 'Visualizar' }
+        ]
     };
 
-    // Forçamos o navegador a usar nossas configurações (incluindo o ícone)
     return self.registration.showNotification(title, notificationOptions);
 });
 
-// Lógica de clique corrigida para samenext.com.br
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-
     const targetUrl = event.notification.data?.url || BASE_URL;
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-            // Se já houver uma aba aberta, foca nela e navega
+            // Se houver janela aberta do site, navega nela e foca
             for (let client of windowClients) {
-                if ('focus' in client) {
+                if (client.url.includes('samenext.com.br') && 'focus' in client) {
                     return client.navigate(targetUrl).then(c => c?.focus());
                 }
             }
-            // Se não houver nada aberto, abre uma nova janela
+            // Se não, abre nova
             if (clients.openWindow) {
                 return clients.openWindow(targetUrl);
             }
