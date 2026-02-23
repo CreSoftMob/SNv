@@ -15,12 +15,12 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-const VERSION = 'v3.9';
-const LOGO_PADRAO = 'https://cdn-icons-png.flaticon.com/128/18827/18827925.png';
-const BADGE_ICON = 'https://cdn-icons-png.flaticon.com/128/4926/4926586.png';
+const VERSION = 'v6.0'; // Incremente para garantir a atualização
+const BASE_URL = 'https://samenext.com.br';
+const LOGO_PADRAO_APP = 'https://cdn-icons-png.flaticon.com/128/18827/18827925.png'; 
+const BADGE_ICON = 'https://samenext.com.br/badge-icon.png'; // Use o mesmo da function
 
 self.addEventListener('install', (e) => self.skipWaiting());
-
 self.addEventListener('activate', (e) => {
     e.waitUntil(
         caches.keys().then((keys) => Promise.all(
@@ -32,57 +32,40 @@ self.addEventListener('activate', (e) => {
 messaging.onBackgroundMessage((payload) => {
     console.log('[SW] Mensagem recebida:', payload);
 
-    // Ajuste 1: Priorizamos os dados (payload.data) pois são mais flexíveis no background
-    const title = payload.data?.title || payload.notification?.title || "Nova Mensagem";
-    const body = payload.data?.body || payload.notification?.body || "";
-    const chatId = payload.data?.chatId || 'geral';
-    const senderIcon = payload.data?.icon || LOGO_PADRAO;
-    
-    // Garante que a URL seja absoluta ou tratada corretamente no clique
-    const clickUrl = payload.data?.url || 'https://samenext.com.br'; 
+    // Agora pegamos os dados que a Function envia no objeto 'data'
+    const title = payload.data?.title || "Samenext";
+    const body = payload.data?.body || "";
+    const fotoPerfil = payload.data?.icon || LOGO_PADRAO_APP; // Aqui pega a foto do remetente
+    const clickUrl = payload.data?.url || BASE_URL;
 
     const notificationOptions = {
         body: body,
-        icon: senderIcon,
-        badge: BADGE_ICON,
-        tag: chatId,
+        icon: fotoPerfil,     // Foto do Usuário
+        badge: BADGE_ICON,    // Ícone do App na barra de status
+        tag: payload.data?.chatId || 'geral',
         renotify: true,
         vibrate: [200, 100, 200],
         data: {
             url: clickUrl
-        },
-        actions: [
-            { action: 'open', title: 'Visualizar' }
-        ]
+        }
     };
 
-    // Ajuste 2: Se 'notification' já existe no payload, o Firebase no Android 
-    // costuma exibir sozinho. Se não, forçamos a exibição manual.
-    if (!payload.notification) {
-        return self.registration.showNotification(title, notificationOptions);
-    }
+    return self.registration.showNotification(title, notificationOptions);
 });
 
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-
-    // Pegamos a URL base para comparar com as abas abertas
-    const targetUrl = new URL(event.notification.data?.url || '/', self.location.origin).href;
+    const targetUrl = event.notification.data?.url || BASE_URL;
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-            // 1. Verifica se já existe uma aba com essa URL exata aberta
+            // Se já estiver no site, navega para o chat e foca
             for (let client of windowClients) {
-                if (client.url === targetUrl && 'focus' in client) {
-                    return client.focus();
+                if (client.url.includes('samenext.com.br') && 'focus' in client) {
+                    return client.navigate(targetUrl).then(c => c?.focus());
                 }
             }
-            // 2. Se não houver a URL exata, mas houver uma aba do app aberta, navega nela
-            if (windowClients.length > 0) {
-                const client = windowClients[0];
-                return client.navigate(targetUrl).then(c => c?.focus());
-            }
-            // 3. Se tudo estiver fechado, abre nova janela
+            // Se não, abre o site na URL do chat
             if (clients.openWindow) {
                 return clients.openWindow(targetUrl);
             }
