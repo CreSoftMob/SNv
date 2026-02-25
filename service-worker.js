@@ -1,5 +1,3 @@
-// firebase-messaging-sw.js
-
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
 
@@ -15,12 +13,12 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-const VERSION = 'v6.0'; // Incremente para garantir a atualização
-const BASE_URL = 'https://samenext.com.br';
+const VERSION = 'v6.1'; // Incrementado para forçar atualização
+const BASE_URL = 'https://samenext.com.br/';
 const LOGO_PADRAO_APP = 'https://cdn-icons-png.flaticon.com/128/18827/18827925.png'; 
-const BADGE_ICON = 'https://cdn-icons-png.flaticon.com/128/4926/4926586.png'; // Use o mesmo da function
+const BADGE_ICON = 'https://cdn-icons-png.flaticon.com/128/4926/4926586.png';
 
-self.addEventListener('install', (e) => self.skipWaiting());
+self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => {
     e.waitUntil(
         caches.keys().then((keys) => Promise.all(
@@ -29,45 +27,41 @@ self.addEventListener('activate', (e) => {
     );
 });
 
+// Lida com mensagens quando o app está em segundo plano
 messaging.onBackgroundMessage((payload) => {
-    console.log('[SW] Mensagem recebida:', payload);
-
-    // Agora pegamos os dados que a Function envia no objeto 'data'
-    const title = payload.data?.title || "Samenext";
-    const body = payload.data?.body || "";
-    const fotoPerfil = payload.data?.icon || LOGO_PADRAO_APP; // Aqui pega a foto do remetente
-    const clickUrl = payload.data?.url || BASE_URL;
+    const title = payload.data?.title || payload.notification?.title || "Samenext";
+    const body = payload.data?.body || payload.notification?.body || "";
+    const icon = payload.data?.icon || payload.notification?.icon || LOGO_PADRAO_APP;
 
     const notificationOptions = {
         body: body,
-        icon: fotoPerfil,     // Foto do Usuário
-        badge: BADGE_ICON,    // Ícone do App na barra de status
-        tag: payload.data?.chatId || 'geral',
+        icon: icon,
+        badge: BADGE_ICON,
+        tag: payload.data?.chatId || 'default-tag',
         renotify: true,
-        vibrate: [200, 100, 200],
         data: {
-            url: clickUrl
+            url: BASE_URL // Forçamos a URL base aqui também
         }
     };
 
     return self.registration.showNotification(title, notificationOptions);
 });
 
+// Lida com o clique na notificação
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-    const targetUrl = event.notification.data?.url || BASE_URL;
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-            // Se já estiver no site, navega para o chat e foca
+            // Se houver uma aba aberta no nosso domínio, foca nela e recarrega a home
             for (let client of windowClients) {
                 if (client.url.includes('samenext.com.br') && 'focus' in client) {
-                    return client.navigate(targetUrl).then(c => c?.focus());
+                    return client.navigate(BASE_URL).then(c => c?.focus());
                 }
             }
-            // Se não, abre o site na URL do chat
+            // Se não houver aba aberta, abre uma nova na home
             if (clients.openWindow) {
-                return clients.openWindow(targetUrl);
+                return clients.openWindow(BASE_URL);
             }
         })
     );
