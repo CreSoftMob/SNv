@@ -18,7 +18,7 @@ const messaging = firebase.messaging();
 const VERSION = 'v6.0'; // Incremente para garantir a atualização
 const BASE_URL = 'https://samenext.com.br';
 const LOGO_PADRAO_APP = 'https://cdn-icons-png.flaticon.com/128/18827/18827925.png'; 
-const BADGE_ICON = 'https://samenext.com.br/badge-icon.png'; // Use o mesmo da function
+const BADGE_ICON = 'https://cdn-icons-png.flaticon.com/128/4926/4926586.png'; // Use o mesmo da function
 
 self.addEventListener('install', (e) => self.skipWaiting());
 self.addEventListener('activate', (e) => {
