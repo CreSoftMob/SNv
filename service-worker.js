@@ -13,7 +13,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-const VERSION = 'v6.6'; // Incrementado para forçar atualização
+const VERSION = 'v6.7'; // Incrementado para forçar atualização
 
 const BASE_URL = 'https://samenext.com.br/';
 const LOGO_PADRAO_APP = 'https://cdn-icons-png.flaticon.com/128/18827/18827925.png'; 
