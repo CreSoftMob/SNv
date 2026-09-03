@@ -27,12 +27,12 @@
         flex: 1;
       }
 
-      /* FIX DEFINITIVO: Força o container do VLibras a ficar visível e sobrepor o app */
+      /* Garante a visibilidade do botão azul flutuante acima de qualquer layer do React Native */
       [vw] {
         position: fixed !important;
         right: 15px !important;
         bottom: 15px !important;
-        z-index: 9999999 !important;
+        z-index: 2147483647 !important;
         display: block !important;
       }
       [vw-access-button] {
@@ -62,7 +62,7 @@
     <!-- Elemento Raiz do React Native Web / Expo -->
     <div id="root"></div>
 
-    <!-- Estrutura nativa do VLibras -->
+    <!-- Estrutura Nao-Sandboxed do VLibras -->
     <div vw class="enabled">
       <div vw-access-button class="active"></div>
       <div vw-plugin-wrapper>
@@ -73,31 +73,34 @@
     <!-- Script Oficial do VLibras -->
     <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
     <script>
-      // Inicialização do widget global
-      new window.VLibras.Widget({
-        rootPath: 'https://vlibras.gov.br/app',
-        personalization: 'https://vlibras.gov.br/config/default.json',
-        opacity: 0.95
-      });
+      // Força a remoção de requisições de cache conflitantes no navegador
+      try {
+        new window.VLibras.Widget({
+          rootPath: 'https://vlibras.gov.br/app',
+          personalization: 'https://vlibras.gov.br/config/default.json'
+        });
+      } catch (e) {
+        console.error('Erro na inicialização do VLibras:', e);
+      }
 
-      // Função global acessível pelo botão React Native
       window.traduzirTextoLibras = function(texto) {
-        // 1. Força o clique no botão azul caso a janela do avatar esteja fechada
         var btnAcesso = document.querySelector('[vw-access-button]');
         if (btnAcesso) {
           btnAcesso.click();
         }
 
-        // 2. Envia a frase para o player do VLibras traduzir
-        if (texto && window.plugin && window.plugin.player) {
-          window.plugin.player.translate(texto);
-        } else if (texto) {
-          // Caso o player ainda esteja carregando, aguarda 1 segundo e tenta novamente
-          setTimeout(function() {
-            if (window.plugin && window.plugin.player) {
-              window.plugin.player.translate(texto);
-            }
-          }, 1200);
+        function tentarTraduzir(tentativa) {
+          if (window.plugin && window.plugin.player && typeof window.plugin.player.translate === 'function') {
+            window.plugin.player.translate(texto);
+          } else if (tentativa < 10) {
+            setTimeout(function() {
+              tentarTraduzir(tentativa + 1);
+            }, 1000);
+          }
+        }
+
+        if (texto) {
+          tentarTraduzir(0);
         }
       };
     </script>
@@ -115,7 +118,7 @@
       }
     </script>
 
-    <!-- Bundle Principal da Aplicação -->
+    <!-- Bundle Principal -->
     <script src="/index-899d8bb1ae58be1faf097299e5ddf3c4.js" defer></script>
   </body>
 </html>
