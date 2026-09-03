@@ -1,72 +1,91 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
     <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>SameNext</title>
-    <meta name="description" content=" 👍 SameNext: O Painel de Acessibilidade Bilateral para o seu Negócio
-
-O SameNext é uma solução B2B que transforma tablets, celulares e smartwatches em pontes de comunicação instantânea entre atendentes ouvintes e clientes surdos. Focado em ambientes comerciais (hospitais, farmácias, lojas), o app elimina a necessidade de digitação demorada. Sede em São Francisco criado em 03/09/2026." />
-    <meta name="keywords" content="SameNext, same next, Same Next, rede social, rede social brasileira, PWA, app, web app, plataforma" />
+    <title>SameNext - Painel de Acessibilidade Bilateral</title>
+    
+    <meta name="description" content="👍 SameNext: O Painel de Acessibilidade Bilateral para o seu Negócio. O SameNext é uma solução B2B que transforma tablets, celulares e smartwatches em pontes de comunicação instantânea entre atendentes ouvintes e clientes surdos." />
+    <meta name="keywords" content="SameNext, same next, Same Next, acessibilidade, libras, PWA, app, web app, plataforma" />
     <meta name="author" content="SameNext" />
-      <link rel="manifest" href="/manifest.json" />
-    <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <meta name="referrer" content="no-referrer-when-downgrade" />
+
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="shortcut icon" type="image/png" href="https://samenext.com.br/logo.png" />
+
+    <!-- Estilos de reset recomendados para React Native Web (Expo) -->
     <style id="expo-reset">
-      /* These styles make the body full-height */
-      html,
-      body {
+      html, body {
         height: 100%;
       }
-      /* These styles disable body scrolling if you are using <ScrollView> */
       body {
         overflow: hidden;
       }
-      /* These styles make the root element full-height */
       #root {
         display: flex;
         height: 100%;
         flex: 1;
       }
     </style>
-  <link rel="shortcut icon"type="icone"  href="https://samenext.com.br/logo.png" />
 
-</head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17817754700"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'AW-17817754700');
+    </script>
+  </head>
 
   <body>
-    <!-- Use static rendering with Expo Router to support running without JavaScript. -->
     <noscript>
-      You need to enable JavaScript to run this app.
+      Você precisa ativar o JavaScript para executar este aplicativo.
     </noscript>
 
-
-    <!-- The root element for your Expo app. -->
+    <!-- Elemento Raiz do React Native Web / Expo -->
     <div id="root"></div>
-     <script>
-    // Verifica se o navegador suporta Service Workers
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-            // Registra o Service Worker a partir do arquivo sw.js
-            navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
-                // Registro bem-sucedido
-                console.log('Service Worker registrado com sucesso:', registration.scope);
-            }, function(err) {
-                // Registro falhou
-                console.log('Falha no registro do Service Worker:', err);
-            });
-        });
-    }
-</script>
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=AW-17817754700"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
 
-  gtag('config', 'AW-17817754700');
-</script>
-  
-  <script src="/index-899d8bb1ae58be1faf097299e5ddf3c4.js" defer></script>
-</body>
+    <!-- ======================================================== -->
+    <!-- COMPONENTE NATIVO E ESTRUTURA DO VLIBRAS GLOBAL          -->
+    <!-- ======================================================== -->
+    <div vw class="enabled">
+      <div vw-access-button class="active"></div>
+      <div vw-plugin-wrapper>
+        <div class="vw-plugin-top-wrapper"></div>
+      </div>
+    </div>
+
+    <!-- Script Oficial do VLibras -->
+    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+    <script>
+      // Inicialização do Widget com correção de rotas para CDN
+      window.addEventListener('load', function () {
+        if (window.VLibras) {
+          new window.VLibras.Widget({
+            rootPath: 'https://vlibras.gov.br/app',
+            personalization: 'https://vlibras.gov.br/config/default.json'
+          });
+        }
+      });
+    </script>
+    <!-- ======================================================== -->
+
+    <!-- Service Worker Registro -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
+            console.log('Service Worker registrado com sucesso:', registration.scope);
+          }).catch(function(err) {
+            console.log('Falha no registro do Service Worker:', err);
+          });
+        });
+      }
+    </script>
+
+    <!-- Bundle Principal da Aplicação -->
+    <script src="/index-899d8bb1ae58be1faf097299e5ddf3c4.js" defer></script>
+  </body>
 </html>
