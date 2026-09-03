@@ -27,12 +27,20 @@
         flex: 1;
       }
 
-      /* Estilo inicial do container VLibras: visível para o script carregar, mas sem atrapalhar a tela */
-      #vlibras-wrapper {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 999999;
+      /* FIX DEFINITIVO: Força o container do VLibras a ficar visível e sobrepor o app */
+      [vw] {
+        position: fixed !important;
+        right: 15px !important;
+        bottom: 15px !important;
+        z-index: 9999999 !important;
+        display: block !important;
+      }
+      [vw-access-button] {
+        display: block !important;
+        width: 50px !important;
+        height: 50px !important;
+        border-radius: 50% !important;
+        cursor: pointer !important;
       }
     </style>
 
@@ -54,74 +62,44 @@
     <!-- Elemento Raiz do React Native Web / Expo -->
     <div id="root"></div>
 
-    <!-- Estrutura nativa requerida pelo VLibras -->
-    <div id="vlibras-wrapper">
-      <div vw class="enabled">
-        <div vw-access-button class="active"></div>
-        <div vw-plugin-wrapper>
-          <div class="vw-plugin-top-wrapper"></div>
-        </div>
+    <!-- Estrutura nativa do VLibras -->
+    <div vw class="enabled">
+      <div vw-access-button class="active"></div>
+      <div vw-plugin-wrapper>
+        <div class="vw-plugin-top-wrapper"></div>
       </div>
     </div>
 
-    <!-- Gerenciador On-Demand de Inicialização do VLibras -->
+    <!-- Script Oficial do VLibras -->
+    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
     <script>
-      window.vlibrasIniciado = false;
+      // Inicialização do widget global
+      new window.VLibras.Widget({
+        rootPath: 'https://vlibras.gov.br/app',
+        personalization: 'https://vlibras.gov.br/config/default.json',
+        opacity: 0.95
+      });
 
-      window.carregarETraduzirLibras = function(texto) {
-        // Se já foi iniciado, faz a tradução e força a abertura da janela do avatar
-        if (window.vlibrasIniciado && window.plugin && window.plugin.player) {
-          abrirETraduzir(texto);
-          return;
-        }
-
-        // Se o script do VLibras ainda não foi carregado na página
-        if (!document.getElementById('vlibras-script')) {
-          var script = document.createElement('script');
-          script.id = 'vlibras-script';
-          script.src = 'https://vlibras.gov.br/app/vlibras-plugin.js';
-          script.async = true;
-
-          script.onload = function() {
-            if (window.VLibras) {
-              new window.VLibras.Widget({
-                rootPath: 'https://vlibras.gov.br/app',
-                personalization: 'https://vlibras.gov.br/config/default.json'
-              });
-
-              window.vlibrasIniciado = true;
-
-              // Aguarda o Player 3D carregar e executa
-              var tentas = 0;
-              var checkPlayer = setInterval(function() {
-                tentas++;
-                if (window.plugin && window.plugin.player && typeof window.plugin.player.translate === 'function') {
-                  clearInterval(checkPlayer);
-                  abrirETraduzir(texto);
-                }
-                if (tentas > 30) clearInterval(checkPlayer); // Timeout de segurança (15 segundos)
-              }, 500);
-            }
-          };
-
-          document.body.appendChild(script);
-        }
-      };
-
-      function abrirETraduzir(texto) {
-        // Clica no botão azul do VLibras para abrir a janela se estiver fechada
+      // Função global acessível pelo botão React Native
+      window.traduzirTextoLibras = function(texto) {
+        // 1. Força o clique no botão azul caso a janela do avatar esteja fechada
         var btnAcesso = document.querySelector('[vw-access-button]');
         if (btnAcesso) {
           btnAcesso.click();
         }
 
-        // Envia o texto para ser traduzido pelo robô
+        // 2. Envia a frase para o player do VLibras traduzir
         if (texto && window.plugin && window.plugin.player) {
+          window.plugin.player.translate(texto);
+        } else if (texto) {
+          // Caso o player ainda esteja carregando, aguarda 1 segundo e tenta novamente
           setTimeout(function() {
-            window.plugin.player.translate(texto);
-          }, 300);
+            if (window.plugin && window.plugin.player) {
+              window.plugin.player.translate(texto);
+            }
+          }, 1200);
         }
-      }
+      };
     </script>
 
     <!-- Service Worker Registro -->
@@ -137,7 +115,7 @@
       }
     </script>
 
-    <!-- Bundle Principal -->
+    <!-- Bundle Principal da Aplicação -->
     <script src="/index-899d8bb1ae58be1faf097299e5ddf3c4.js" defer></script>
   </body>
 </html>
