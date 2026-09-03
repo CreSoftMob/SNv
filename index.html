@@ -27,20 +27,11 @@
         flex: 1;
       }
 
-      /* Garante a visibilidade do botão azul flutuante acima de qualquer layer do React Native */
-      [vw] {
-        position: fixed !important;
-        right: 15px !important;
-        bottom: 15px !important;
+      /* Garante que a div de acesso do VLibras e os elementos gerados fiquem acima do React Native */
+      #vlibras-access-wrapper,
+      #vlibras-app-root,
+      div[vw] {
         z-index: 2147483647 !important;
-        display: block !important;
-      }
-      [vw-access-button] {
-        display: block !important;
-        width: 50px !important;
-        height: 50px !important;
-        border-radius: 50% !important;
-        cursor: pointer !important;
       }
     </style>
 
@@ -62,7 +53,7 @@
     <!-- Elemento Raiz do React Native Web / Expo -->
     <div id="root"></div>
 
-    <!-- Estrutura Nao-Sandboxed do VLibras -->
+    <!-- Estrutura Nao-Sandboxed e limpa do VLibras (conforme a imagem) -->
     <div vw class="enabled">
       <div vw-access-button class="active"></div>
       <div vw-plugin-wrapper>
@@ -70,37 +61,36 @@
       </div>
     </div>
 
-    <!-- Script Oficial do VLibras -->
-    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
-    <script>
-      // Força a remoção de requisições de cache conflitantes no navegador
-      try {
-        new window.VLibras.Widget({
-          rootPath: 'https://vlibras.gov.br/app',
-          personalization: 'https://vlibras.gov.br/config/default.json'
-        });
-      } catch (e) {
-        console.error('Erro na inicialização do VLibras:', e);
-      }
+    <!-- Script Oficial Atualizado (Versao Module exata do print) -->
+    <script type="module" src="https://vlibras.gov.br/app/vlibras-plugin-app.js?v=7.9.1" async></script>
 
+    <script>
+      // Função global acessível pelo React Native para traduzir textos dinamicamente
       window.traduzirTextoLibras = function(texto) {
-        var btnAcesso = document.querySelector('[vw-access-button]');
-        if (btnAcesso) {
-          btnAcesso.click();
+        // 1. Tenta acionar pelo botão do Shadow Root ou botão padrão
+        var btnAccess = document.querySelector('[vw-access-button]') || 
+                        document.querySelector('#vlibras-button') ||
+                        (document.querySelector('#vlibras-access-wrapper') && 
+                         document.querySelector('#vlibras-access-wrapper').shadowRoot && 
+                         document.querySelector('#vlibras-access-wrapper').shadowRoot.querySelector('button'));
+
+        if (btnAccess) {
+          btnAccess.click();
         }
 
-        function tentarTraduzir(tentativa) {
+        // 2. Tenta enviar o texto para tradução
+        function executarTraducoes(tentativas) {
           if (window.plugin && window.plugin.player && typeof window.plugin.player.translate === 'function') {
             window.plugin.player.translate(texto);
-          } else if (tentativa < 10) {
+          } else if (tentativas < 15) {
             setTimeout(function() {
-              tentarTraduzir(tentativa + 1);
-            }, 1000);
+              executarTraducoes(tentativas + 1);
+            }, 500);
           }
         }
 
         if (texto) {
-          tentarTraduzir(0);
+          executarTraducoes(0);
         }
       };
     </script>
