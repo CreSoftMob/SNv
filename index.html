@@ -6,15 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <title>SameNext - Painel de Acessibilidade Bilateral</title>
     
-    <meta name="description" content="👍 SameNext: O Painel de Acessibilidade Bilateral para o seu Negócio. O SameNext é uma solução B2B que transforma tablets, celulares e smartwatches em pontes de comunicação instantânea entre atendentes ouvintes e clientes surdos." />
-    <meta name="keywords" content="SameNext, same next, Same Next, acessibilidade, libras, PWA, app, web app, plataforma" />
+    <meta name="description" content="👍 SameNext: O Painel de Acessibilidade Bilateral para o seu Negócio." />
+    <meta name="keywords" content="SameNext, same next, acessibilidade, libras, PWA, app, web app" />
     <meta name="author" content="SameNext" />
     <meta name="referrer" content="no-referrer-when-downgrade" />
 
     <link rel="manifest" href="/manifest.json" />
     <link rel="shortcut icon" type="image/png" href="https://samenext.com.br/logo.png" />
 
-    <!-- Estilos de reset recomendados para React Native Web (Expo) -->
     <style id="expo-reset">
       html, body {
         height: 100%;
@@ -47,32 +46,59 @@
     <!-- Elemento Raiz do React Native Web / Expo -->
     <div id="root"></div>
 
-    <!-- ======================================================== -->
-    <!-- COMPONENTE NATIVO E ESTRUTURA DO VLIBRAS GLOBAL          -->
-    <!-- ======================================================== -->
-    <div vw class="enabled">
+    <!-- Estrutura HTML Oculta do VLibras (Só é ativada por script) -->
+    <div vw class="enabled" style="display: none;" id="vlibras-container">
       <div vw-access-button class="active"></div>
       <div vw-plugin-wrapper>
         <div class="vw-plugin-top-wrapper"></div>
       </div>
     </div>
 
-    <!-- Script Oficial do VLibras -->
-    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+    <!-- Script de Carregamento Sob Demanda do VLibras -->
     <script>
-      // Inicialização do Widget com correção de rotas para CDN
-      window.addEventListener('load', function () {
-        if (window.VLibras) {
-          new window.VLibras.Widget({
-            rootPath: 'https://vlibras.gov.br/app',
-            personalization: 'https://vlibras.gov.br/config/default.json'
-          });
-        }
-      });
-    </script>
-    <!-- ======================================================== -->
+      window.vlibrasCarregado = false;
 
-    <!-- Service Worker Registro -->
+      window.carregarETraduzirLibras = function(texto) {
+        var container = document.getElementById('vlibras-container');
+        if (container) container.style.display = 'block';
+
+        if (window.vlibrasCarregado && window.plugin && window.plugin.player) {
+          if (texto) window.plugin.player.translate(texto);
+          return;
+        }
+
+        // Se ainda não foi carregado, injeta o script do VLibras dinamicamente
+        if (!document.getElementById('vlibras-script')) {
+          var script = document.createElement('script');
+          script.id = 'vlibras-script';
+          script.src = 'https://vlibras.gov.br/app/vlibras-plugin.js';
+          script.async = true;
+
+          script.onload = function() {
+            if (window.VLibras) {
+              new window.VLibras.Widget({
+                rootPath: 'https://vlibras.gov.br/app',
+                personalization: 'https://vlibras.gov.br/config/default.json'
+              });
+
+              window.vlibrasCarregado = true;
+
+              // Aguarda a inicialização do Player WebGL para traduzir o texto
+              var checkPlayer = setInterval(function() {
+                if (window.plugin && window.plugin.player && typeof window.plugin.player.translate === 'function') {
+                  clearInterval(checkPlayer);
+                  if (texto) window.plugin.player.translate(texto);
+                }
+              }, 500);
+            }
+          };
+
+          document.body.appendChild(script);
+        }
+      };
+    </script>
+
+    <!-- Service Worker -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
@@ -85,7 +111,7 @@
       }
     </script>
 
-    <!-- Bundle Principal da Aplicação -->
+    <!-- Bundle Principal -->
     <script src="/index-899d8bb1ae58be1faf097299e5ddf3c4.js" defer></script>
   </body>
 </html>
