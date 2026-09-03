@@ -1,147 +1,163 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>SameNext - Painel de Acessibilidade Bilateral</title>
-    
-    <meta name="description" content="👍 SameNext: O Painel de Acessibilidade Bilateral para o seu Negócio." />
-    <meta name="keywords" content="SameNext, same next, acessibilidade, libras, PWA, app, web app" />
-    <meta name="author" content="SameNext" />
-    <meta name="referrer" content="no-referrer-when-downgrade" />
+<head>
+  <meta charset="utf-8" />
+  <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+  />
 
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="shortcut icon" type="image/png" href="https://samenext.com.br/logo.png" />
+  <title>SameNext - Painel de Acessibilidade Bilateral</title>
 
-    <style id="expo-reset">
-      html, body {
-        height: 100%;
-      }
-      body {
-        overflow: hidden;
-      }
-      #root {
-        display: flex;
-        height: 100%;
-        flex: 1;
-      }
+  <meta
+    name="description"
+    content="👍 SameNext: O Painel de Acessibilidade Bilateral para o seu Negócio."
+  />
 
-      /* Container customizado do Iframe Isolado do VLibras */
-      #vlibras-iframe-container {
-        position: fixed;
-        bottom: 10px;
-        right: 10px;
-        width: 320px;
-        height: 500px;
-        z-index: 2147483647 !important;
-        pointer-events: none;
-        border: none;
-      }
+  <meta
+    name="keywords"
+    content="SameNext, same next, acessibilidade, libras, PWA, app, web app"
+  />
 
-      #vlibras-iframe-container iframe {
-        width: 100%;
-        height: 100%;
-        border: none;
-        pointer-events: auto;
-      }
-    </style>
+  <meta name="author" content="SameNext" />
+  <meta name="referrer" content="no-referrer-when-downgrade" />
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17817754700"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'AW-17817754700');
-    </script>
-  </head>
+  <link rel="manifest" href="/manifest.json" />
+  <link
+    rel="shortcut icon"
+    type="image/png"
+    href="https://samenext.com.br/logo.png"
+  />
 
-  <body>
-    <noscript>
-      Você precisa ativar o JavaScript para executar este aplicativo.
-    </noscript>
+  <style>
+    html,
+    body {
+      height: 100%;
+    }
 
-    <!-- Elemento Raiz do React Native Web / Expo -->
-    <div id="root"></div>
+    body {
+      overflow: hidden;
+    }
 
-    <!-- Container em Iframe Isolado (Bypassa bloqueios de CORS e Storage) -->
-    <div id="vlibras-iframe-container">
-      <iframe 
-        id="vlibras-frame"
-        srcdoc='
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="utf-8">
-              <style>
-                body { margin: 0; padding: 0; overflow: hidden; background: transparent; }
-                [vw] { position: absolute !important; right: 0 !important; bottom: 0 !important; }
-              </style>
-            </head>
-            <body>
-              <div vw class="enabled">
-                <div vw-access-button class="active"></div>
-                <div vw-plugin-wrapper>
-                  <div class="vw-plugin-top-wrapper"></div>
-                </div>
-              </div>
-              <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
-              <script>
-                new window.VLibras.Widget({
-                  rootPath: "https://vlibras.gov.br/app",
-                  personalization: "https://vlibras.gov.br/config/default.json"
-                });
+    #root {
+      display: flex;
+      height: 100%;
+      flex: 1;
+    }
 
-                window.addEventListener("message", function(event) {
-                  if (event.data && event.data.type === "TRADUZIR_LIBRAS") {
-                    var btnAcesso = document.querySelector("[vw-access-button]");
-                    if (btnAcesso) btnAcesso.click();
+    /* VLibras */
+    [vw] {
+      z-index: 2147483647 !important;
+    }
+  </style>
 
-                    function tentar(i) {
-                      if (window.plugin && window.plugin.player && typeof window.plugin.player.translate === "function") {
-                        window.plugin.player.translate(event.data.texto);
-                      } else if (i < 20) {
-                        setTimeout(function() { tentar(i + 1); }, 500);
-                      }
-                    }
-                    tentar(0);
-                  }
-                });
-              </script>
-            </body>
-          </html>
-        '
-      ></iframe>
+  <!-- Google tag -->
+  <script
+    async
+    src="https://www.googletagmanager.com/gtag/js?id=AW-17817754700"
+  ></script>
+
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+    gtag('config', 'AW-17817754700');
+  </script>
+</head>
+
+<body>
+
+  <noscript>
+    Você precisa ativar o JavaScript para executar este aplicativo.
+  </noscript>
+
+  <!-- React Native Web / Expo -->
+  <div id="root"></div>
+
+  <!-- ========================= -->
+  <!-- VLibras                   -->
+  <!-- ========================= -->
+
+  <div vw class="enabled">
+
+    <div vw-access-button class="active"></div>
+
+    <div vw-plugin-wrapper>
+      <div class="vw-plugin-top-wrapper"></div>
     </div>
 
-    <script>
-      // Função acionada pela sua aplicação React Native Web
-      window.traduzirTextoLibras = function(texto) {
-        var iframe = document.getElementById('vlibras-frame');
-        if (iframe && iframe.contentWindow) {
-          iframe.contentWindow.postMessage({
-            type: 'TRADUZIR_LIBRAS',
-            texto: texto
-          }, '*');
-        }
-      };
-    </script>
+  </div>
 
-    <!-- Service Worker Registro -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-          navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
-            console.log('Service Worker registrado com sucesso:', registration.scope);
-          }).catch(function(err) {
-            console.log('Falha no registro do Service Worker:', err);
-          });
+  <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+
+  <script>
+    window.addEventListener('load', function () {
+
+      if (
+        window.VLibras &&
+        typeof window.VLibras.Widget === 'function'
+      ) {
+
+        window.vlibrasWidget = new window.VLibras.Widget({
+          rootPath: 'https://vlibras.gov.br/app',
+          personalization: 'https://vlibras.gov.br/config/default.json',
+          avatar: 'icaro',
+          position: 'R'
         });
-      }
-    </script>
 
-    <!-- Bundle Principal -->
-    <script src="/index-899d8bb1ae58be1faf097299e5ddf3c4.js" defer></script>
-  </body>
+        console.log('VLibras carregado com sucesso');
+
+      } else {
+
+        console.error(
+          'VLibras Widget não foi encontrado.'
+        );
+
+      }
+
+    });
+  </script>
+
+  <!-- Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+
+      window.addEventListener('load', function () {
+
+        navigator.serviceWorker
+          .register('/service-worker.js')
+          .then(function (registration) {
+
+            console.log(
+              'Service Worker registrado com sucesso:',
+              registration.scope
+            );
+
+          })
+          .catch(function (err) {
+
+            console.error(
+              'Falha no registro do Service Worker:',
+              err
+            );
+
+          });
+
+      });
+
+    }
+  </script>
+
+  <!-- Bundle React Native Web / Expo -->
+  <script
+    src="/index-899d8bb1ae58be1faf097299e5ddf3c4.js"
+    defer
+  ></script>
+
+</body>
 </html>
