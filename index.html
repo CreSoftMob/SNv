@@ -2,37 +2,21 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, shrink-to-fit=no"
-  />
+  <meta equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 
   <title>SameNext - Painel de Acessibilidade Bilateral</title>
 
-  <meta
-    name="description"
-    content="👍 SameNext: O Painel de Acessibilidade Bilateral para o seu Negócio."
-  />
-
-  <meta
-    name="keywords"
-    content="SameNext, same next, acessibilidade, libras, PWA, app, web app"
-  />
-
+  <meta name="description" content="👍 SameNext: O Painel de Acessibilidade Bilateral para o seu Negócio." />
+  <meta name="keywords" content="SameNext, same next, acessibilidade, libras, PWA, app, web app" />
   <meta name="author" content="SameNext" />
   <meta name="referrer" content="no-referrer-when-downgrade" />
 
   <link rel="manifest" href="/manifest.json" />
-  <link
-    rel="shortcut icon"
-    type="image/png"
-    href="https://samenext.com.br/logo.png"
-  />
+  <link rel="shortcut icon" type="image/png" href="https://samenext.com.br/logo.png" />
 
   <style>
-    html,
-    body {
+    html, body {
       height: 100%;
     }
 
@@ -46,25 +30,17 @@
       flex: 1;
     }
 
-    /* VLibras */
+    /* Força o elemento do VLibras a ficar visível acima do React Native */
     [vw] {
       z-index: 2147483647 !important;
     }
   </style>
 
   <!-- Google tag -->
-  <script
-    async
-    src="https://www.googletagmanager.com/gtag/js?id=AW-17817754700"
-  ></script>
-
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17817754700"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-
-    function gtag() {
-      dataLayer.push(arguments);
-    }
-
+    function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
     gtag('config', 'AW-17817754700');
   </script>
@@ -79,85 +55,81 @@
   <!-- React Native Web / Expo -->
   <div id="root"></div>
 
-  <!-- ========================= -->
-  <!-- VLibras                   -->
-  <!-- ========================= -->
-
+  <!-- Estrutura Nao-Ativa do VLibras -->
   <div vw class="enabled">
-
     <div vw-access-button class="active"></div>
-
     <div vw-plugin-wrapper>
       <div class="vw-plugin-top-wrapper"></div>
     </div>
-
   </div>
 
-  <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
-
   <script>
-    window.addEventListener('load', function () {
+    window.vlibrasCarregado = false;
 
-      if (
-        window.VLibras &&
-        typeof window.VLibras.Widget === 'function'
-      ) {
-
-        window.vlibrasWidget = new window.VLibras.Widget({
-          rootPath: 'https://vlibras.gov.br/app',
-          personalization: 'https://vlibras.gov.br/config/default.json',
-          avatar: 'icaro',
-          position: 'R'
-        });
-
-        console.log('VLibras carregado com sucesso');
-
-      } else {
-
-        console.error(
-          'VLibras Widget não foi encontrado.'
-        );
-
+    // Função que só roda quando o usuário clica para traduzir
+    window.traduzirTextoLibras = function(texto) {
+      if (window.vlibrasCarregado) {
+        executarTraducao(texto);
+        return;
       }
 
-    });
+      // 1. Injeta o script apenas no clique do usuário
+      var script = document.createElement('script');
+      script.src = 'https://vlibras.gov.br/app/vlibras-plugin.js';
+      script.onload = function() {
+        if (window.VLibras && typeof window.VLibras.Widget === 'function') {
+          window.vlibrasWidget = new window.VLibras.Widget({
+            rootPath: 'https://vlibras.gov.br/app',
+            personalization: 'https://vlibras.gov.br/config/default.json',
+            avatar: 'icaro',
+            position: 'R'
+          });
+
+          window.vlibrasCarregado = true;
+          executarTraducao(texto);
+        }
+      };
+
+      document.body.appendChild(script);
+    };
+
+    function executarTraducao(texto) {
+      // Abre a janela do avatar se estiver fechada
+      var btnAcesso = document.querySelector('[vw-access-button]');
+      if (btnAcesso) {
+        btnAcesso.click();
+      }
+
+      // Aguarda a engine 3D ficar pronta e envia o texto
+      function tentar(tentativas) {
+        if (window.plugin && window.plugin.player && typeof window.plugin.player.translate === 'function') {
+          if (texto) window.plugin.player.translate(texto);
+        } else if (tentativas < 20) {
+          setTimeout(function() { tentar(tentativas + 1); }, 600);
+        }
+      }
+      tentar(0);
+    }
   </script>
 
   <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
-
       window.addEventListener('load', function () {
-
         navigator.serviceWorker
           .register('/service-worker.js')
           .then(function (registration) {
-
-            console.log(
-              'Service Worker registrado com sucesso:',
-              registration.scope
-            );
-
+            console.log('Service Worker registrado com sucesso:', registration.scope);
           })
           .catch(function (err) {
-
-            console.error(
-              'Falha no registro do Service Worker:',
-              err
-            );
-
+            console.error('Falha no registro do Service Worker:', err);
           });
-
       });
-
     }
   </script>
 
   <!-- Bundle React Native Web / Expo -->
-  <script
-    src="/index-899d8bb1ae58be1faf097299e5ddf3c4.js"
-    defer
-  ></script>
+  <script src="/index-899d8bb1ae58be1faf097299e5ddf3c4.js" defer></script>
 
 </body>
 </html>
