@@ -26,6 +26,14 @@
         height: 100%;
         flex: 1;
       }
+
+      /* Estilo inicial do container VLibras: visível para o script carregar, mas sem atrapalhar a tela */
+      #vlibras-wrapper {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 999999;
+      }
     </style>
 
     <!-- Google tag (gtag.js) -->
@@ -46,28 +54,28 @@
     <!-- Elemento Raiz do React Native Web / Expo -->
     <div id="root"></div>
 
-    <!-- Estrutura HTML Oculta do VLibras (Só é ativada por script) -->
-    <div vw class="enabled" style="display: none;" id="vlibras-container">
-      <div vw-access-button class="active"></div>
-      <div vw-plugin-wrapper>
-        <div class="vw-plugin-top-wrapper"></div>
+    <!-- Estrutura nativa requerida pelo VLibras -->
+    <div id="vlibras-wrapper">
+      <div vw class="enabled">
+        <div vw-access-button class="active"></div>
+        <div vw-plugin-wrapper>
+          <div class="vw-plugin-top-wrapper"></div>
+        </div>
       </div>
     </div>
 
-    <!-- Script de Carregamento Sob Demanda do VLibras -->
+    <!-- Gerenciador On-Demand de Inicialização do VLibras -->
     <script>
-      window.vlibrasCarregado = false;
+      window.vlibrasIniciado = false;
 
       window.carregarETraduzirLibras = function(texto) {
-        var container = document.getElementById('vlibras-container');
-        if (container) container.style.display = 'block';
-
-        if (window.vlibrasCarregado && window.plugin && window.plugin.player) {
-          if (texto) window.plugin.player.translate(texto);
+        // Se já foi iniciado, faz a tradução e força a abertura da janela do avatar
+        if (window.vlibrasIniciado && window.plugin && window.plugin.player) {
+          abrirETraduzir(texto);
           return;
         }
 
-        // Se ainda não foi carregado, injeta o script do VLibras dinamicamente
+        // Se o script do VLibras ainda não foi carregado na página
         if (!document.getElementById('vlibras-script')) {
           var script = document.createElement('script');
           script.id = 'vlibras-script';
@@ -81,14 +89,17 @@
                 personalization: 'https://vlibras.gov.br/config/default.json'
               });
 
-              window.vlibrasCarregado = true;
+              window.vlibrasIniciado = true;
 
-              // Aguarda a inicialização do Player WebGL para traduzir o texto
+              // Aguarda o Player 3D carregar e executa
+              var tentas = 0;
               var checkPlayer = setInterval(function() {
+                tentas++;
                 if (window.plugin && window.plugin.player && typeof window.plugin.player.translate === 'function') {
                   clearInterval(checkPlayer);
-                  if (texto) window.plugin.player.translate(texto);
+                  abrirETraduzir(texto);
                 }
+                if (tentas > 30) clearInterval(checkPlayer); // Timeout de segurança (15 segundos)
               }, 500);
             }
           };
@@ -96,9 +107,24 @@
           document.body.appendChild(script);
         }
       };
+
+      function abrirETraduzir(texto) {
+        // Clica no botão azul do VLibras para abrir a janela se estiver fechada
+        var btnAcesso = document.querySelector('[vw-access-button]');
+        if (btnAcesso) {
+          btnAcesso.click();
+        }
+
+        // Envia o texto para ser traduzido pelo robô
+        if (texto && window.plugin && window.plugin.player) {
+          setTimeout(function() {
+            window.plugin.player.translate(texto);
+          }, 300);
+        }
+      }
     </script>
 
-    <!-- Service Worker -->
+    <!-- Service Worker Registro -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
