@@ -27,11 +27,23 @@
         flex: 1;
       }
 
-      /* Garante que o widget moderno fique acima da interface do React Native */
-      #vlibras-access-wrapper,
-      #vlibras-app-root,
-      [vw] {
+      /* Container customizado do Iframe Isolado do VLibras */
+      #vlibras-iframe-container {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        width: 320px;
+        height: 500px;
         z-index: 2147483647 !important;
+        pointer-events: none;
+        border: none;
+      }
+
+      #vlibras-iframe-container iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        pointer-events: auto;
       }
     </style>
 
@@ -53,53 +65,65 @@
     <!-- Elemento Raiz do React Native Web / Expo -->
     <div id="root"></div>
 
-    <!-- Estrutura nativa requerida pelo VLibras -->
-    <div vw class="enabled">
-      <div vw-access-button class="active"></div>
-      <div vw-plugin-wrapper>
-        <div class="vw-plugin-top-wrapper"></div>
-      </div>
+    <!-- Container em Iframe Isolado (Bypassa bloqueios de CORS e Storage) -->
+    <div id="vlibras-iframe-container">
+      <iframe 
+        id="vlibras-frame"
+        srcdoc='
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { margin: 0; padding: 0; overflow: hidden; background: transparent; }
+                [vw] { position: absolute !important; right: 0 !important; bottom: 0 !important; }
+              </style>
+            </head>
+            <body>
+              <div vw class="enabled">
+                <div vw-access-button class="active"></div>
+                <div vw-plugin-wrapper>
+                  <div class="vw-plugin-top-wrapper"></div>
+                </div>
+              </div>
+              <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+              <script>
+                new window.VLibras.Widget({
+                  rootPath: "https://vlibras.gov.br/app",
+                  personalization: "https://vlibras.gov.br/config/default.json"
+                });
+
+                window.addEventListener("message", function(event) {
+                  if (event.data && event.data.type === "TRADUZIR_LIBRAS") {
+                    var btnAcesso = document.querySelector("[vw-access-button]");
+                    if (btnAcesso) btnAcesso.click();
+
+                    function tentar(i) {
+                      if (window.plugin && window.plugin.player && typeof window.plugin.player.translate === "function") {
+                        window.plugin.player.translate(event.data.texto);
+                      } else if (i < 20) {
+                        setTimeout(function() { tentar(i + 1); }, 500);
+                      }
+                    }
+                    tentar(0);
+                  }
+                });
+              </script>
+            </body>
+          </html>
+        '
+      ></iframe>
     </div>
 
-    <!-- Carregador oficial do VLibras -->
-    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
     <script>
-      // Força a busca dos ativos (Unity, ícones, fontes) na CDN oficial e não no seu domínio
-      window.addEventListener('DOMContentLoaded', function() {
-        if (window.VLibras) {
-          new window.VLibras.Widget({
-            rootPath: 'https://vlibras.gov.br/app',
-            personalization: 'https://vlibras.gov.br/config/default.json',
-            opacity: 0.95
-          });
-        }
-      });
-
-      // Função global acionada pelo React Native
+      // Função acionada pela sua aplicação React Native Web
       window.traduzirTextoLibras = function(texto) {
-        // Tenta acionar o botão de exibição no DOM principal ou dentro do Shadow DOM
-        var btnAcesso = document.querySelector('[vw-access-button]') ||
-                        document.querySelector('#vlibras-button') ||
-                        (document.querySelector('#vlibras-access-wrapper') && 
-                         document.querySelector('#vlibras-access-wrapper').shadowRoot && 
-                         document.querySelector('#vlibras-access-wrapper').shadowRoot.querySelector('button'));
-
-        if (btnAcesso) {
-          btnAcesso.click();
-        }
-
-        function dispararTraducao(tentativa) {
-          if (window.plugin && window.plugin.player && typeof window.plugin.player.translate === 'function') {
-            window.plugin.player.translate(texto);
-          } else if (tentativa < 20) {
-            setTimeout(function() {
-              dispararTraducao(tentativa + 1);
-            }, 500);
-          }
-        }
-
-        if (texto) {
-          dispararTraducao(0);
+        var iframe = document.getElementById('vlibras-frame');
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage({
+            type: 'TRADUZIR_LIBRAS',
+            texto: texto
+          }, '*');
         }
       };
     </script>
